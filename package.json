@@ -1,0 +1,274 @@
+const STORAGE_KEY = 'plan-quest-saves-v1';
+
+const defaultState = {
+  theme: 'dark',
+  playerName: 'Astra',
+  level: 1,
+  xp: 0,
+  gold: 0,
+  streak: 0,
+  quests: [
+    { id: 1, title: 'Finish key project milestone', reward: 30, done: false },
+    { id: 2, title: 'Plan tomorrow before bed', reward: 18, done: false },
+    { id: 3, title: 'Workout for 30 minutes', reward: 24, done: true },
+  ],
+  habits: [
+    { id: 1, title: 'Drink water', reward: 10, done: true },
+    { id: 2, title: 'Read for 20 minutes', reward: 12, done: false },
+    { id: 3, title: 'Write a gratitude note', reward: 8, done: false },
+  ],
+  log: [
+    { text: 'The guild has begun its journey.', type: 'system' },
+    { text: 'A new day begins. Stay sharp.', type: 'system' },
+  ],
+};
+
+let state = loadState();
+
+const xpThreshold = 100;
+
+const questList = document.getElementById('questList');
+const habitList = document.getElementById('habitList');
+const eventLog = document.getElementById('eventLog');
+const xpBar = document.getElementById('xpBar');
+const xpMeta = document.getElementById('xpMeta');
+const levelValue = document.getElementById('levelValue');
+const xpValue = document.getElementById('xpValue');
+const goldValue = document.getElementById('goldValue');
+const streakValue = document.getElementById('streakValue');
+const streakBonus = document.getElementById('streakBonus');
+const nextLevelText = document.getElementById('nextLevelText');
+const avatarInitial = document.getElementById('avatarInitial');
+const playerName = document.getElementById('playerName');
+const themeToggle = document.getElementById('themeToggle');
+const resetDayBtn = document.getElementById('resetDay');
+const addQuestBtn = document.getElementById('addQuestBtn');
+
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return structuredClone(defaultState);
+
+  try {
+    const parsed = JSON.parse(saved);
+    return { ...structuredClone(defaultState), ...parsed };
+  } catch (err) {
+    return structuredClone(defaultState);
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function hydrateTheme() {
+  document.body.classList.toggle('light-mode', state.theme === 'light');
+  themeToggle.textContent = state.theme === 'light' ? 'Night mode' : 'Day mode';
+}
+
+function addLog(message, type = 'quest') {
+  state.log.unshift({ text: message, type });
+  state.log = state.log.slice(0, 8);
+}
+
+function awardXp(amount) {
+  state.xp += amount;
+  while (state.xp >= state.level * xpThreshold) {
+    state.xp -= state.level * xpThreshold;
+    state.level += 1;
+    state.gold += 20;
+    addLog(`Level up! You reached level ${state.level}.`, 'level');
+  }
+}
+
+function updateDisplay() {
+  const threshold = state.level * xpThreshold;
+  const xpPercent = Math.min((state.xp / threshold) * 100, 100);
+
+  xpBar.style.width = `${xpPercent}%`;
+  xpMeta.textContent = `${state.xp} / ${threshold}`;
+  levelValue.textContent = state.level;
+  xpValue.textContent = state.xp;
+  goldValue.textContent = state.gold;
+  streakValue.textContent = state.streak;
+  streakBonus.textContent = `+${Math.min(state.streak * 5, 50)}%`;
+  nextLevelText.textContent = `Level ${state.level + 1}`;
+  playerName.textContent = state.playerName;
+  avatarInitial.textContent = state.playerName.charAt(0).toUpperCase();
+
+  hydrateTheme();
+}
+
+function renderQuests() {
+  if (!state.quests.length) {
+    questList.innerHTML = '<div class="empty-state">No quests yet. Create one from the guild board.</div>';
+    return;
+  }
+
+  questList.innerHTML = state.quests
+    .map(
+      (quest) => `
+        <label class="quest-card">
+          <input type="checkbox" data-type="quest" data-id="${quest.id}" ${quest.done ? 'checked' : ''} />
+          <div class="quest-copy ${quest.done ? 'quest-complete' : ''}">
+            <h4>${quest.title}</h4>
+            <div class="quest-meta">Reward: +${quest.reward} XP and +${Math.round(quest.reward / 2)} gold</div>
+          </div>
+          <button class="delete-btn" data-delete-quest="${quest.id}" aria-label="Delete quest">✕</button>
+        </label>
+      `
+    )
+    .join('');
+}
+
+function renderHabits() {
+  if (!state.habits.length) {
+    habitList.innerHTML = '<div class="empty-state">No habits tracked today.</div>';
+    return;
+  }
+
+  habitList.innerHTML = state.habits
+    .map(
+      (habit) => `
+        <label class="habit-card">
+          <input type="checkbox" data-type="habit" data-id="${habit.id}" ${habit.done ? 'checked' : ''} />
+          <div class="habit-copy ${habit.done ? 'habit-complete' : ''}">
+            <h4>${habit.title}</h4>
+            <div class="habit-meta">Reward: +${habit.reward} XP</div>
+          </div>
+          <button class="delete-btn" data-delete-habit="${habit.id}" aria-label="Delete habit">✕</button>
+        </label>
+      `
+    )
+    .join('');
+}
+
+function renderLog() {
+  if (!state.log.length) {
+    eventLog.innerHTML = '<li>No events yet. Start your quest.</li>';
+    return;
+  }
+
+  eventLog.innerHTML = state.log
+    .map(
+      (entry) => `
+        <li><strong>${entry.type.toUpperCase()}</strong> — ${entry.text}</li>
+      `
+    )
+    .join('');
+}
+
+function renderAll() {
+  renderQuests();
+  renderHabits();
+  renderLog();
+  updateDisplay();
+  saveState();
+}
+
+function completeTask(type, id) {
+  const list = type === 'quest' ? state.quests : state.habits;
+  const item = list.find((entry) => entry.id === id);
+  if (!item || item.done) return;
+
+  item.done = true;
+  state.streak += 1;
+  state.gold += Math.round(item.reward / 2);
+  awardXp(item.reward);
+  addLog(`Quest complete: ${item.title}. +${item.reward} XP`, 'success');
+  renderAll();
+}
+
+function addQuest() {
+  const title = window.prompt('Name your new quest:');
+  if (!title || !title.trim()) return;
+
+  const reward = Number(window.prompt('How much XP should this quest reward?', '30')) || 30;
+  state.quests.unshift({
+    id: Date.now(),
+    title: title.trim(),
+    reward: Math.max(10, reward),
+    done: false,
+  });
+
+  addLog(`New mission added: ${title.trim()}.`, 'system');
+  renderAll();
+}
+
+function deleteTask(type, id) {
+  if (type === 'quest') {
+    state.quests = state.quests.filter((quest) => quest.id !== id);
+    addLog('Quest removed from the board.', 'system');
+  } else {
+    state.habits = state.habits.filter((habit) => habit.id !== id);
+    addLog('Habit removed from the routine.', 'system');
+  }
+
+  renderAll();
+}
+
+function resetDay() {
+  state.habits = state.habits.map((habit) => ({ ...habit, done: false }));
+  state.quests = state.quests.map((quest) => ({ ...quest, done: false }));
+  state.streak = 0;
+  addLog('A new day begins. Your routine resets.', 'system');
+  renderAll();
+}
+
+function handleCheckboxChange(event) {
+  const checkbox = event.target;
+  const { id, type } = checkbox.dataset;
+  if (!id) return;
+
+  const numericId = Number(id);
+  const list = type === 'quest' ? state.quests : state.habits;
+  const item = list.find((entry) => entry.id === numericId);
+
+  if (!item) return;
+
+  if (checkbox.checked) {
+    completeTask(type, numericId);
+  } else {
+    item.done = false;
+    state.streak = Math.max(0, state.streak - 1);
+    addLog(`Progress reversed for: ${item.title}.`, 'system');
+    renderAll();
+  }
+}
+
+function handleDeleteClick(event) {
+  const button = event.target.closest('[data-delete-quest]');
+  if (button) {
+    deleteTask('quest', Number(button.dataset.deleteQuest));
+    return;
+  }
+
+  const habitButton = event.target.closest('[data-delete-habit]');
+  if (habitButton) {
+    deleteTask('habit', Number(habitButton.dataset.deleteHabit));
+  }
+}
+
+questList.addEventListener('change', (event) => {
+  if (event.target.matches('input[type="checkbox"]')) {
+    handleCheckboxChange(event);
+  }
+});
+
+habitList.addEventListener('change', (event) => {
+  if (event.target.matches('input[type="checkbox"]')) {
+    handleCheckboxChange(event);
+  }
+});
+
+questList.addEventListener('click', handleDeleteClick);
+habitList.addEventListener('click', handleDeleteClick);
+
+addQuestBtn.addEventListener('click', addQuest);
+resetDayBtn.addEventListener('click', resetDay);
+themeToggle.addEventListener('click', () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  addLog(`The guild has switched to ${state.theme === 'dark' ? 'night' : 'day'} mode.`, 'system');
+  renderAll();
+});
+
+renderAll();

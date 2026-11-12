@@ -1,2 +1,10 @@
-# plan-quest
-A game-inspired personal planning dashboard that runs locally in the browser.
+{
+  "name": "plan-quest",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "python -m http.server 3000",
+    "dev": "python -m http.server 3000"
+  }
+}
+

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plan Quest</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar panel">
+        <div class="brand-wrap">
+          <div class="brand-icon">⚔️</div>
+          <div>
+            <p class="eyebrow">Quest Board</p>
+            <h1>Plan Quest</h1>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="themeToggle" class="secondary-btn">Night mode</button>
+          <button id="resetDay" class="primary-btn">Reset Day</button>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <aside class="panel profile-panel">
+          <div class="character-card">
+            <div class="avatar-ring">
+              <div class="avatar" id="avatarInitial">A</div>
+            </div>
+            <div>
+              <p class="eyebrow">Hero</p>
+              <h2 id="playerName">Astra</h2>
+            </div>
+          </div>
+
+          <div class="status-grid">
+            <div class="status-box">
+              <span>Level</span>
+              <strong id="levelValue">1</strong>
+            </div>
+            <div class="status-box">
+              <span>XP</span>
+              <strong id="xpValue">0</strong>
+            </div>
+            <div class="status-box">
+              <span>Gold</span>
+              <strong id="goldValue">0</strong>
+            </div>
+            <div class="status-box">
+              <span>Streak</span>
+              <strong id="streakValue">0</strong>
+            </div>
+          </div>
+
+          <div class="xp-wrap">
+            <div class="xp-labels">
+              <span>Progress</span>
+              <span id="xpMeta">0 / 100</span>
+            </div>
+            <div class="xp-bar">
+              <div id="xpBar"></div>
+            </div>
+          </div>
+
+          <div class="mini-panel">
+            <h3>Guild Notes</h3>
+            <ul>
+              <li>Daily streak boost: <span id="streakBonus">+0%</span></li>
+              <li>Next reward: <span id="nextLevelText">Level 2</span></li>
+            </ul>
+          </div>
+        </aside>
+
+        <section class="content-column">
+          <div class="panel quests-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Mission Board</p>
+                <h3>Active Quests</h3>
+              </div>
+              <button id="addQuestBtn" class="primary-btn">+ New Quest</button>
+            </div>
+            <div id="questList" class="quest-list"></div>
+          </div>
+
+          <div class="panel habits-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Routine</p>
+                <h3>Daily Habits</h3>
+              </div>
+            </div>
+            <div id="habitList" class="habit-list"></div>
+          </div>
+        </section>
+
+        <aside class="panel log-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Chronicle</p>
+              <h3>Guild Log</h3>
+            </div>
+          </div>
+          <ul id="eventLog" class="event-log"></ul>
+        </aside>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
